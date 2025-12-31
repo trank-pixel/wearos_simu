@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMF Phone Finder Blue</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --accent-blue: #3182ce; /* Тот самый синий из прошлых приложений */
+            --text-color: #fff;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: var(--text-color);
+            user-select: none;
+        }
+
+        /* Hardware Watch */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+            z-index: 0;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-container { position: relative; z-index: 1; }
+
+        .side-button {
+            position: absolute;
+            right: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 50px;
+            background: linear-gradient(to right, #bbb, #ddd, #999);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .watch-face {
+            width: 320px; height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 10px solid #d1d1d1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .active { display: flex; }
+
+        /* Device Selection */
+        .device-btn {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            margin: 8px;
+            border-radius: 25px;
+            width: 210px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+
+        .device-btn:active { background: var(--accent-blue); }
+
+        /* Finding Animation */
+        .call-icon {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phone-rect {
+            width: 28px; height: 48px;
+            border: 3px solid var(--accent-blue);
+            border-radius: 4px;
+            position: relative;
+            z-index: 2;
+            background: var(--bg-color);
+        }
+        
+        /* Waves (Pulsing) */
+        .wave {
+            position: absolute;
+            border: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            opacity: 0;
+            z-index: 1;
+        }
+        
+        .wave-left {
+            width: 45px; height: 45px;
+            border-top: none; border-bottom: none; border-right: none;
+            left: -15px;
+        }
+        .wave-right {
+            width: 45px; height: 45px;
+            border-top: none; border-bottom: none; border-left: none;
+            right: -15px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .finding-text {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .device-subtext {
+            color: var(--accent-blue);
+            font-size: 0.7rem;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" onclick="goBack()"></div>
+        
+        <div class="watch-face">
+            
+            <div id="screen-list" class="screen active">
+                <div style="font-size: 0.7rem; color: #888; margin-bottom: 20px; letter-spacing: 1px;">FIND MY PHONE</div>
+                <button class="device-btn" onclick="startFind('Pixel 9 Pro XL')">
+                    <span style="color: var(--accent-blue)">■</span> Pixel 9 Pro XL
+                </button>
+                <button class="device-btn" onclick="startFind('Nothing Phone (3)')">
+                    <span style="color: var(--accent-blue)">●</span> Nothing Phone (3)
+                </button>
+            </div>
+
+            <div id="screen-calling" class="screen">
+                <div class="call-icon">
+                    <div class="wave wave-left"></div>
+                    <div class="phone-rect"></div>
+                    <div class="wave wave-right"></div>
+                </div>
+                <div class="finding-text">Вызов</div>
+                <div id="target-device" class="device-subtext"></div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function startFind(name) {
+        document.getElementById('target-device').textContent = name;
+        showScreen('screen-calling');
+    }
+
+    function goBack() {
+        showScreen('screen-list');
+    }
+</script>
+</body>
+</html>

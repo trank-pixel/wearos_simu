@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS Calculator</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --accent-color: #3182ce;
+            --btn-bg: #1a1a1a;
+            --text-color: #fff;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text-color);
+            user-select: none;
+        }
+
+        /* Hardware */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+            z-index: 0;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-container { position: relative; z-index: 1; }
+
+        .side-button {
+            position: absolute;
+            right: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 50px;
+            background: linear-gradient(to right, #ccc, #eee, #999);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .watch-face {
+            width: 320px; height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 8px solid #333;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Calculator Display */
+        .display {
+            width: 80%;
+            height: 60px;
+            background: transparent;
+            text-align: right;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            word-wrap: break-word;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            color: var(--accent-color);
+            font-family: monospace;
+        }
+
+        /* Keyboard Grid */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            width: 90%;
+        }
+
+        button {
+            background: var(--btn-bg);
+            border: none;
+            color: white;
+            padding: 12px 0;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:active {
+            background: #444;
+        }
+
+        .op-btn {
+            color: var(--accent-color);
+        }
+
+        .eq-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .eq-btn:active {
+            background: #2c5282;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" onclick="clearDisplay()"></div>
+        
+        <div class="watch-face">
+            <div class="display" id="calc-display">0</div>
+            
+            <div class="keypad">
+                <button onclick="press('7')">7</button>
+                <button onclick="press('8')">8</button>
+                <button onclick="press('9')">9</button>
+                <button class="op-btn" onclick="press('/')">/</button>
+                
+                <button onclick="press('4')">4</button>
+                <button onclick="press('5')">5</button>
+                <button onclick="press('6')">6</button>
+                <button class="op-btn" onclick="press('*')">×</button>
+                
+                <button onclick="press('1')">1</button>
+                <button onclick="press('2')">2</button>
+                <button onclick="press('3')">3</button>
+                <button class="op-btn" onclick="press('-')">-</button>
+                
+                <button onclick="press('0')">0</button>
+                <button onclick="press('.')">.</button>
+                <button class="eq-btn" onclick="calculate()">=</button>
+                <button class="op-btn" onclick="press('+')">+</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentInput = "0";
+
+    function updateDisplay() {
+        const display = document.getElementById('calc-display');
+        display.textContent = currentInput;
+        
+        // Font size scaling
+        if (currentInput.length > 8) {
+            display.style.fontSize = "1.2rem";
+        } else {
+            display.style.fontSize = "1.8rem";
+        }
+    }
+
+    function press(key) {
+        if (currentInput === "0" && key !== ".") {
+            currentInput = key;
+        } else {
+            currentInput += key;
+        }
+        updateDisplay();
+    }
+
+    function clearDisplay() {
+        currentInput = "0";
+        updateDisplay();
+    }
+
+    function calculate() {
+        try {
+            // Evaluates the string
+            currentInput = eval(currentInput).toString();
+            // Round to avoid long floating numbers
+            if (currentInput.includes('.') && currentInput.length > 10) {
+                currentInput = parseFloat(currentInput).toFixed(4).toString();
+            }
+        } catch (e) {
+            currentInput = "Error";
+        }
+        updateDisplay();
+    }
+</script>
+</body>
+</html>

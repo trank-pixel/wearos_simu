@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS Fitness Pro</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --accent-color: #00ff88;
+            --strap-color: #f0f0f0;
+            --text-color: #fff;
+            --danger-color: #ff4444;
+            --water-color: #00a2ff;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text-color);
+            user-select: none;
+        }
+
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+            z-index: 0;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-container { position: relative; z-index: 1; }
+
+        .side-button {
+            position: absolute;
+            right: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 50px;
+            background: linear-gradient(to right, #ccc, #eee, #999);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .watch-face {
+            width: 320px; height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 8px solid #333;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .active { display: flex; }
+
+        /* Workout List Scrollable */
+        .workout-list {
+            height: 180px;
+            overflow-y: auto;
+            scrollbar-width: none;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .workout-list button {
+            background: #111;
+            color: white;
+            border: 1px solid #222;
+            padding: 10px;
+            margin: 3px;
+            border-radius: 20px;
+            width: 160px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .water-lock-icon {
+            color: var(--water-color);
+            font-size: 0.7rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .pulse { font-size: 0.9rem; color: #ff4444; margin-bottom: 5px; }
+
+        .btn-go {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-color);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #countdown-text { font-size: 5rem; font-weight: bold; color: var(--accent-color); }
+
+        .timer-val { font-size: 3rem; font-weight: bold; }
+
+        .pause-overlay { background: rgba(0,0,0,0.9); gap: 10px; }
+        .btn-resume { background: var(--accent-color); color: #000; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;}
+        .btn-stop { background: var(--danger-color); color: #fff; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;}
+
+        .water-hint {
+            font-size: 0.6rem;
+            color: var(--water-color);
+            position: absolute;
+            bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" onclick="handleHardwareButton()"></div>
+
+        <div class="watch-face">
+            
+            <div id="screen-menu" class="screen active">
+                <h3 style="font-size: 0.9rem; margin: 10px 0;">Тренировка</h3>
+                <div class="workout-list">
+                    <button onclick="selectWorkout('Бег')">Бег</button>
+                    <button onclick="selectWorkout('Плавание')">Плавание</button>
+                    <button onclick="selectWorkout('Ходьба')">Ходьба</button>
+                    <button onclick="selectWorkout('Футбол')">Футбол</button>
+                    <button onclick="selectWorkout('Йога')">Йога</button>
+                </div>
+            </div>
+
+            <div id="screen-start" class="screen">
+                <div id="selected-name" style="margin-bottom: 10px;">БЕГ</div>
+                <div class="pulse" id="pulse-val">75 BPM</div>
+                <button class="btn-go" onclick="startCountdown()">GO</button>
+            </div>
+
+            <div id="screen-countdown" class="screen">
+                <div id="countdown-text">3</div>
+            </div>
+
+            <div id="screen-active" class="screen">
+                <div id="water-indicator" class="water-lock-icon" style="display:none;">(.) WATER LOCK</div>
+                <div style="font-size: 0.7rem; letter-spacing: 1px;" id="active-type-label">БЕГ</div>
+                <div class="timer-val" id="workout-timer">00:00</div>
+                <div class="pulse" id="active-pulse">--</div>
+                <div id="water-hint" class="water-hint" style="display:none;">Нажми 2 раза для паузы</div>
+            </div>
+
+            <div id="screen-pause" class="screen pause-overlay">
+                <div style="font-weight: bold;">ПАУЗА</div>
+                <button class="btn-resume" onclick="resumeWorkout()">Продолжить</button>
+                <button class="btn-stop" id="stop-btn" onclick="confirmStop()">Завершить</button>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    let currentWorkout = "";
+    let seconds = 0;
+    let timerInterval, pulseInterval;
+    let isPaused = false;
+    let stopConfirm = false;
+
+    // Water Lock Logic
+    let waterClickCount = 0;
+    let waterClickTimeout = null;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function selectWorkout(type) {
+        currentWorkout = type;
+        document.getElementById('selected-name').textContent = type.toUpperCase();
+        showScreen('screen-start');
+        startPulseSim();
+    }
+
+    function startPulseSim() {
+        if(pulseInterval) clearInterval(pulseInterval);
+        pulseInterval = setInterval(() => {
+            const val = Math.floor(Math.random() * (150 - 70) + 70);
+            document.getElementById('pulse-val').textContent = val + " BPM";
+            document.getElementById('active-pulse').textContent = val + " BPM";
+        }, 2000);
+    }
+
+    function startCountdown() {
+        showScreen('screen-countdown');
+        let count = 3;
+        document.getElementById('countdown-text').textContent = count;
+        let cd = setInterval(() => {
+            count--;
+            if(count > 0) document.getElementById('countdown-text').textContent = count;
+            else { clearInterval(cd); startActualWorkout(); }
+        }, 1000);
+    }
+
+    function startActualWorkout() {
+        showScreen('screen-active');
+        document.getElementById('active-type-label').textContent = currentWorkout.toUpperCase();
+        
+        // Water lock visual
+        const isSwimming = currentWorkout === 'Плавание';
+        document.getElementById('water-indicator').style.display = isSwimming ? 'block' : 'none';
+        document.getElementById('water-hint').style.display = isSwimming ? 'block' : 'none';
+
+        seconds = 0;
+        isPaused = false;
+        runTimer();
+    }
+
+    function runTimer() {
+        if(timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if(!isPaused) {
+                seconds++;
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                document.getElementById('workout-timer').textContent = 
+                    `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }
+        }, 1000);
+    }
+
+    // Hardware Button with Water Lock Logic
+    function handleHardwareButton() {
+        const activeScreenId = document.querySelector('.screen.active').id;
+        
+        if (activeScreenId === 'screen-active') {
+            if (currentWorkout === 'Плавание') {
+                handleWaterLockClick();
+            } else {
+                pauseWorkout();
+            }
+        } else if (activeScreenId === 'screen-pause') {
+            resumeWorkout();
+        }
+    }
+
+    function handleWaterLockClick() {
+        waterClickCount++;
+        
+        if (waterClickTimeout) clearTimeout(waterClickTimeout);
+
+        if (waterClickCount === 2) {
+            waterClickCount = 0;
+            pauseWorkout();
+        } else {
+            // Если второе нажатие не последовало в течение 3 секунд - сброс
+            waterClickTimeout = setTimeout(() => {
+                waterClickCount = 0;
+            }, 3000);
+        }
+    }
+
+    function pauseWorkout() {
+        isPaused = true;
+        stopConfirm = false;
+        document.getElementById('stop-btn').textContent = "Завершить";
+        showScreen('screen-pause');
+    }
+
+    function resumeWorkout() {
+        isPaused = false;
+        showScreen('screen-active');
+    }
+
+    function confirmStop() {
+        if(!stopConfirm) {
+            document.getElementById('stop-btn').textContent = "Точно?";
+            stopConfirm = true;
+        } else {
+            resetToMenu();
+        }
+    }
+
+    function resetToMenu() {
+        clearInterval(timerInterval);
+        clearInterval(pulseInterval);
+        showScreen('screen-menu');
+    }
+</script>
+</body>
+</html>

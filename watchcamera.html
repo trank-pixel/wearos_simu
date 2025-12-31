@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMF Camera Fixed</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --accent-blue: #3182ce;
+            --nothing-white: #ffffff;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        /* Hardware */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-face {
+            width: 320px; height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 10px solid #d1d1d1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .side-button {
+            position: absolute;
+            right: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 50px;
+            background: linear-gradient(to right, #bbb, #ddd, #999);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* UI Elements */
+        .top-bar {
+            position: absolute;
+            top: 40px;
+            font-size: 0.9rem;
+        }
+
+        /* Countdown - Blue as requested */
+        #countdown {
+            font-size: 6rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            display: none;
+            z-index: 5;
+        }
+
+        /* Shutter */
+        #shutter-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .shutter-btn {
+            width: 70px; height: 70px;
+            background: var(--nothing-white);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 6px solid rgba(255,255,255,0.2);
+            background-clip: padding-box;
+        }
+
+        /* Timer toggle */
+        .timer-btn {
+            position: absolute;
+            bottom: 50px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .timer-circle {
+            width: 32px; height: 32px;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #timer-val { font-size: 0.7rem; color: #aaa; }
+
+        /* Flash */
+        #flash {
+            position: absolute;
+            width: 100%; height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .flash-anim { animation: do-flash 0.3s ease-out; }
+        @keyframes do-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container" style="position:relative">
+        <div class="side-button" onclick="resetAll()"></div>
+        <div class="watch-face">
+            <div id="flash"></div>
+            <div class="top-bar" id="clock">21:45</div>
+
+            <div id="countdown">3</div>
+
+            <div id="shutter-wrap">
+                <div class="shutter-btn" onclick="handleCapture()"></div>
+            </div>
+
+            <div class="timer-btn" id="timer-ui" onclick="toggleTimer()">
+                <div class="timer-circle">⏱</div>
+                <div id="timer-val">OFF</div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let timer = 0;
+    let activeInterval = null;
+
+    function toggleTimer() {
+        if (activeInterval) return;
+        if (timer === 0) timer = 3;
+        else if (timer === 3) timer = 10;
+        else timer = 0;
+        document.getElementById('timer-val').textContent = timer === 0 ? 'OFF' : timer + 's';
+    }
+
+    function handleCapture() {
+        if (activeInterval) return;
+
+        if (timer > 0) {
+            startSequence();
+        } else {
+            shoot();
+        }
+    }
+
+    function startSequence() {
+        const countEl = document.getElementById('countdown');
+        const shutter = document.getElementById('shutter-wrap');
+        const timerUi = document.getElementById('timer-ui');
+
+        // Hide shutter and timer
+        shutter.style.display = 'none';
+        timerUi.style.display = 'none';
+        
+        // Show countdown
+        countEl.style.display = 'block';
+        let current = timer;
+        countEl.textContent = current;
+
+        activeInterval = setInterval(() => {
+            current--;
+            if (current > 0) {
+                countEl.textContent = current;
+            } else {
+                clearInterval(activeInterval);
+                activeInterval = null;
+                countEl.style.display = 'none';
+                shutter.style.display = 'flex';
+                timerUi.style.display = 'flex';
+                shoot();
+            }
+        }, 1000);
+    }
+
+    function shoot() {
+        const f = document.getElementById('flash');
+        f.classList.remove('flash-anim');
+        void f.offsetWidth; 
+        f.classList.add('flash-anim');
+    }
+
+    function resetAll() {
+        clearInterval(activeInterval);
+        activeInterval = null;
+        document.getElementById('countdown').style.display = 'none';
+        document.getElementById('shutter-wrap').style.display = 'flex';
+        document.getElementById('timer-ui').style.display = 'flex';
+    }
+
+    // Clock update
+    setInterval(() => {
+        const n = new Date();
+        document.getElementById('clock').textContent = 
+            n.getHours().toString().padStart(2,'0') + ':' + 
+            n.getMinutes().toString().padStart(2,'0');
+    }, 1000);
+</script>
+</body>
+</html>

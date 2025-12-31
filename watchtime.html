@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS White Edition</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --accent-color: #00f2ff;
+            --strap-color: #f0f0f0;
+            --text-color: #fff;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Strap Elements */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+            z-index: 0;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        /* Watch Case & Button */
+        .watch-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .side-button {
+            position: absolute;
+            right: -12px;
+            width: 20px;
+            height: 45px;
+            background: linear-gradient(to right, #ccc, #eee, #999);
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .watch-face {
+            width: 320px;
+            height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 8px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        /* Visual Ring for Stopwatch */
+        .ring-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        #sw-ring {
+            fill: none;
+            stroke: var(--accent-color);
+            stroke-width: 4;
+            stroke-dasharray: 942; /* 2 * PI * 150 */
+            stroke-dashoffset: 942;
+            transition: stroke-dashoffset 0.1s linear;
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+
+        /* Content Sections */
+        .content {
+            z-index: 2;
+            text-align: center;
+        }
+
+        #clock { font-size: 2rem; font-weight: bold; margin: 0; }
+        #date { font-size: 0.75rem; color: var(--accent-color); margin-bottom: 10px; }
+
+        .display { font-family: monospace; font-size: 1.2rem; margin: 5px 0; }
+        
+        .controls button {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            cursor: pointer;
+        }
+
+        input {
+            background: #111;
+            border: 1px solid #333;
+            color: var(--accent-color);
+            width: 35px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        hr { width: 50%; border: 0; border-top: 1px solid #222; margin: 10px auto; }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" onclick="startStopwatch()" title="Start/Pause"></div>
+        <div class="watch-face">
+            <svg class="ring-container">
+                <circle id="sw-ring" cx="160" cy="160" r="150"></circle>
+            </svg>
+
+            <div class="content">
+                <div id="date">-- --</div>
+                <div id="clock">00:00:00</div>
+                
+                <hr>
+
+                <div>
+                    <div id="sw-display" class="display">00:00.00</div>
+                    <div class="controls">
+                        <button onclick="startStopwatch()">Start</button>
+                        <button onclick="resetStopwatch()">Reset</button>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div>
+                    <div id="tm-display" class="display">00:00</div>
+                    <div class="controls">
+                        <input type="number" id="tm-input" value="1" min="1">
+                        <button onclick="startTimer()">Set</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').textContent = now.toLocaleTimeString('ru-RU');
+        document.getElementById('date').textContent = now.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Stopwatch with Ring
+    let swStart, swInterval, swElapsed = 0;
+    const ring = document.getElementById('sw-ring');
+    const ringMax = 942;
+
+    function startStopwatch() {
+        if (swInterval) {
+            clearInterval(swInterval);
+            swInterval = null;
+        } else {
+            swStart = Date.now() - swElapsed;
+            swInterval = setInterval(() => {
+                swElapsed = Date.now() - swStart;
+                const totalSecs = swElapsed / 1000;
+                const m = Math.floor(totalSecs / 60);
+                const s = Math.floor(totalSecs % 60);
+                const ms = Math.floor((swElapsed % 1000) / 10);
+                
+                document.getElementById('sw-display').textContent = 
+                    `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${ms.toString().padStart(2,'0')}`;
+                
+                // Update circle (60 seconds per loop)
+                const offset = ringMax - (ringMax * (totalSecs % 60) / 60);
+                ring.style.strokeDashoffset = offset;
+            }, 50);
+        }
+    }
+
+    function resetStopwatch() {
+        clearInterval(swInterval);
+        swInterval = null;
+        swElapsed = 0;
+        document.getElementById('sw-display').textContent = "00:00.00";
+        ring.style.strokeDashoffset = ringMax;
+    }
+
+    // Timer
+    let tmInterval;
+    function startTimer() {
+        clearInterval(tmInterval);
+        let timeLeft = parseInt(document.getElementById('tm-input').value) * 60;
+        tmInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(tmInterval);
+                alert("Time is up");
+                return;
+            }
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('tm-display').textContent = 
+                `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }, 1000);
+    }
+</script>
+</body>
+</html>

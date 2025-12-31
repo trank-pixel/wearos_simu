@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Watch 3 OS - Final</title>
+    <style>
+        :root {
+            --bg-dark: #000;
+            --strap-color: #f2f2f2;
+            --card-olive: #1c1c14;
+            --accent-lavender: #d0bcff;
+            --text-main: #e3e3e3;
+            --text-dim: #999;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; font-family: 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-main); overflow: hidden; touch-action: none;
+        }
+
+        /* Hardware */
+        .strap { position: absolute; width: 140px; height: 200px; background: var(--strap-color); border-radius: 20px; z-index: 1; }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+        .watch-container { position: relative; display: flex; justify-content: center; align-items: center; z-index: 2; }
+        .side-button { position: absolute; right: -12px; width: 20px; height: 50px; background: #999; border-radius: 5px; cursor: pointer; z-index: 100; transition: background 0.1s; }
+        .side-button:active { background: #666; }
+
+        .watch-face {
+            width: 320px; height: 320px; background: var(--bg-dark);
+            border-radius: 50%; border: 10px solid #d1d1d1;
+            position: relative; overflow: hidden;
+        }
+
+        /* Pages System */
+        .page {
+            position: absolute; width: 100%; height: 100%;
+            background: #000; display: none; flex-direction: column;
+            padding: 65px 24px 85px 24px; box-sizing: border-box;
+            overflow-y: scroll; scrollbar-width: none;
+            mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+        }
+        .page::-webkit-scrollbar { display: none; }
+        .page.active { display: flex; }
+
+        .header { text-align: center; font-size: 0.95rem; color: var(--accent-lavender); margin-bottom: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* List Elements */
+        .menu-item {
+            background: var(--card-olive); border-radius: 28px;
+            padding: 14px 18px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: transform 0.1s, background 0.2s;
+            flex-shrink: 0;
+        }
+        .menu-item:active { background: #2a2a20; transform: scale(0.97); }
+        .icon-box { width: 36px; height: 36px; background: #303124; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .svg-icon { width: 20px; height: 20px; fill: var(--accent-lavender); }
+        
+        .content-box { flex-grow: 1; overflow: hidden; }
+        .title { font-size: 0.9rem; font-weight: 500; display: block; }
+        .subtitle { font-size: 0.75rem; color: var(--text-dim); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Controls */
+        .slider-wrap { background: var(--card-olive); padding: 18px; border-radius: 28px; margin-bottom: 10px; text-align: center; }
+        input[type=range] { width: 100%; accent-color: var(--accent-lavender); margin-top: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" id="hw-back-btn"></div>
+        <div class="watch-face" id="screen">
+            
+            <div id="main-settings" class="page active">
+                <div class="header">Settings</div>
+                <div class="menu-item" onclick="nav.to('wifi-page')">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 21l-12-18h24z"/></svg></div>
+                    <div class="content-box"><span class="title">Wi-Fi</span><span class="subtitle">Pixel_5G</span></div>
+                </div>
+                <div class="menu-item" onclick="nav.to('bt-page')">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29z"/></svg></div>
+                    <div class="content-box"><span class="title">Bluetooth</span><span class="subtitle">Phone Connected</span></div>
+                </div>
+                <div class="menu-item" onclick="nav.to('display-page')">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/></svg></div>
+                    <div class="content-box"><span class="title">Display</span><span class="subtitle">Brightness, Sleep</span></div>
+                </div>
+                <div class="menu-item" onclick="nav.to('sound-page')">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></div>
+                    <div class="content-box"><span class="title">Sound</span><span class="subtitle">Vibration, Volume</span></div>
+                </div>
+                <div class="menu-item" onclick="nav.to('about-page')">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm11-13h2V7h-2v2z"/></svg></div>
+                    <div class="content-box"><span class="title">About watch</span><span class="subtitle">Pixel Watch 3</span></div>
+                </div>
+            </div>
+
+            <div id="wifi-page" class="page">
+                <div class="header">Wi-Fi</div>
+                <div class="menu-item"><div class="content-box"><span class="title">Pixel_5G</span><span class="subtitle">Connected</span></div></div>
+                <div class="menu-item"><div class="content-box"><span class="title">Home_WiFi</span><span class="subtitle">Saved</span></div></div>
+            </div>
+
+            <div id="bt-page" class="page">
+                <div class="header">Bluetooth</div>
+                <div class="menu-item">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg></div>
+                    <div class="content-box"><span class="title">Pixel Phone</span><span class="subtitle">Connected</span></div>
+                </div>
+                <div class="menu-item">
+                    <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5z"/></svg></div>
+                    <div class="content-box"><span class="title">Pixel Buds Pro</span><span class="subtitle">Pairing mode</span></div>
+                </div>
+            </div>
+
+            <div id="display-page" class="page">
+                <div class="header">Display</div>
+                <div class="slider-wrap">
+                    <span class="subtitle">Brightness</span>
+                    <input type="range" value="80">
+                </div>
+                <div class="menu-item" onclick="ui.cycle(this, ['15s', '30s', '1m'])">
+                    <div class="content-box"><span class="title">Screen timeout</span><span class="subtitle">30s</span></div>
+                </div>
+            </div>
+
+            <div id="sound-page" class="page">
+                <div class="header">Sound</div>
+                <div class="slider-wrap">
+                    <span class="subtitle">Volume</span>
+                    <input type="range" max="10" value="7">
+                </div>
+                <div class="menu-item" onclick="ui.cycle(this, ['Light', 'Medium', 'Strong'])">
+                    <div class="content-box"><span class="title">Vibration</span><span class="subtitle">Medium</span></div>
+                </div>
+            </div>
+
+            <div id="about-page" class="page">
+                <div class="header">About</div>
+                <div class="menu-item"><div class="content-box"><span class="title">Model</span><span class="subtitle">Pixel Watch 3 (v5.0)</span></div></div>
+                <div class="menu-item"><div class="content-box"><span class="title">Serial</span><span class="subtitle">PW3-2025-ABCD</span></div></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Navigation Module
+        const nav = {
+            stack: ['main-settings'],
+            to(id) {
+                document.getElementById(this.stack[this.stack.length-1]).classList.remove('active');
+                document.getElementById(id).classList.add('active');
+                document.getElementById(id).scrollTop = 0;
+                this.stack.push(id);
+            },
+            back() {
+                if (this.stack.length > 1) {
+                    document.getElementById(this.stack.pop()).classList.remove('active');
+                    document.getElementById(this.stack[this.stack.length-1]).classList.add('active');
+                }
+            }
+        };
+
+        // UI Helpers
+        const ui = {
+            cycle(el, values) {
+                const sub = el.querySelector('.subtitle');
+                let idx = (values.indexOf(sub.innerText) + 1) % values.length;
+                sub.innerText = values[idx];
+            }
+        };
+
+        // Hardware Button
+        document.getElementById('hw-back-btn').onclick = () => nav.back();
+
+        // Smooth Scroll Logic
+        document.querySelectorAll('.page').forEach(page => {
+            let isDown = false, startY, scrollT;
+            page.onpointerdown = (e) => { isDown = true; startY = e.pageY; scrollT = page.scrollTop; };
+            window.onpointerup = () => isDown = false;
+            window.onpointermove = (e) => {
+                if (!isDown) return;
+                page.scrollTop = scrollT - (e.pageY - startY) * 1.4;
+            };
+        });
+    </script>
+</body>
+</html>

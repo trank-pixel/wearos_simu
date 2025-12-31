@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS Setup Flow</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --accent-blue: #3182ce;
+            --text-gray: #888;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        /* Hardware */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+            z-index: 0;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .side-button {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 50px;
+            background: linear-gradient(to right, #bbb, #ddd, #999);
+            border-radius: 5px;
+        }
+
+        .watch-face {
+            width: 320px; height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 10px solid #d1d1d1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .active { display: flex; }
+
+        /* Stage 1: Language */
+        .lang-list {
+            width: 80%;
+            max-height: 180px;
+            overflow-y: hidden;
+        }
+        .lang-item {
+            padding: 10px;
+            border-radius: 20px;
+            margin: 5px 0;
+            background: #111;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+        .lang-item.enabled {
+            background: #222;
+            color: white;
+            border: 1px solid var(--accent-blue);
+            cursor: pointer;
+        }
+
+        /* Stage 2 & 3: Loading */
+        .dots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .dot {
+            width: 10px; height: 10px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            animation: pulse 0.6s infinite alternate;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            from { opacity: 0.3; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* Progress Bar */
+        .progress-box {
+            width: 150px;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-blue);
+            transition: width 0.3s;
+        }
+
+        h2 { font-size: 1.1rem; margin: 10px 0; }
+        p { font-size: 0.75rem; color: var(--text-gray); }
+
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button"></div>
+        <div class="watch-face">
+            
+            <div class="screen active" id="s1">
+                <h2>Language</h2>
+                <div class="lang-list">
+                    <div class="lang-item">Русский</div>
+                    <div class="lang-item enabled" onclick="next(1)">English (US)</div>
+                    <div class="lang-item">Deutsch</div>
+                    <div class="lang-item">Français</div>
+                </div>
+            </div>
+
+            <div class="screen" id="s2">
+                <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                <h2>Pairing...</h2>
+                <p>Check your phone</p>
+            </div>
+
+            <div class="screen" id="s3">
+                <h2 style="color: var(--accent-blue)">Google Play</h2>
+                <p>Downloading apps...</p>
+                <div class="progress-box"><div class="progress-bar" id="pb"></div></div>
+            </div>
+
+            <div class="screen" id="s4">
+                <div style="font-size: 3rem; color: var(--accent-blue)">✓</div>
+                <h2>All set!</h2>
+                <p>Welcome to WearOS</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function next(current) {
+            document.getElementById('s' + current).classList.remove('active');
+            const nextScreen = document.getElementById('s' + (current + 1));
+            nextScreen.classList.add('active');
+
+            if (current === 1) {
+                // Псевдо-подключение к телефону
+                setTimeout(() => next(2), 3000);
+            }
+            if (current === 2) {
+                // Имитация загрузки приложений
+                let p = 0;
+                const interval = setInterval(() => {
+                    p += 10;
+                    document.getElementById('pb').style.width = p + '%';
+                    if (p >= 100) {
+                        clearInterval(interval);
+                        next(3);
+                    }
+                }, 400);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS Full Pro Interface</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --accent-blue: #4285F4;
+            --status-olive: #2b2d1d;
+            --icon-light: #e3e4d7;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; font-family: 'Segoe UI', Roboto, sans-serif;
+            color: white; user-select: none; overflow: hidden; touch-action: none;
+        }
+
+        .strap { position: absolute; width: 140px; height: 200px; background: var(--strap-color); border-radius: 20px; }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+        .watch-container { position: relative; display: flex; justify-content: center; align-items: center; }
+        .side-button { position: absolute; right: -12px; width: 20px; height: 50px; background: #999; border-radius: 5px; cursor: pointer; z-index: 1000; }
+
+        .watch-face {
+            width: 320px; height: 320px; background: var(--bg-color);
+            border-radius: 50%; border: 10px solid #d1d1d1;
+            position: relative; overflow: hidden;
+        }
+
+        .layer { 
+            position: absolute; width: 100%; height: 100%; 
+            transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: none;
+        }
+
+        #status-bar { transform: translateY(-100%); background: #000; z-index: 500; }
+        #notifications { transform: translateY(100%); background: #000; z-index: 500; }
+        #main-layer { z-index: 100; pointer-events: auto; }
+
+        /* Status Bar Icons */
+        .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px; box-sizing: border-box; }
+        .s-btn { width: 60px; height: 60px; background: var(--status-olive); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .s-pill { grid-column: span 1; background: var(--status-olive); border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: var(--icon-light); }
+        .svg-icon { width: 24px; height: 24px; fill: var(--icon-light); }
+
+        /* Watch Faces Styles */
+        .face-container { width: 100%; height: 100%; display: none; align-items: center; justify-content: center; position: relative; }
+        .face-container.active { display: flex; }
+
+        /* Analog Hands */
+        .h-h { width: 12px; height: 70px; border: 4px solid #fff; border-radius: 15px; position: absolute; transform-origin: 50% 90%; bottom: 50%; box-sizing: border-box; }
+        .h-m { width: 10px; height: 105px; border: 4px solid #fff; border-radius: 15px; position: absolute; transform-origin: 50% 90%; bottom: 50%; box-sizing: border-box; }
+        .h-s { width: 2px; height: 120px; background: var(--accent-blue); position: absolute; transform-origin: 50% 90%; bottom: 50%; }
+        .h-center { width: 8px; height: 8px; background: var(--accent-blue); border-radius: 50%; z-index: 10; }
+
+        .pink-time { font-size: 6.5rem; color: #ffb4a2; line-height: 0.8; font-weight: 200; text-align: center; }
+
+        .ring { width: 220px; height: 220px; border: 12px solid #1a1a1a; border-top: 12px solid #d4ff00; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        .selector-mode { transform: scale(0.6) !important; border: 4px solid var(--accent-blue) !important; border-radius: 60px !important; }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" id="home-btn"></div>
+        <div class="watch-face" id="screen">
+            
+            <div id="status-bar" class="layer">
+                <div class="status-grid">
+                    <div class="s-btn"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+                    <div class="s-btn"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 2h12v6l-4 4v8h-4v-8l-4-4V2z"/></svg></div>
+                    <div class="s-btn"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z"/></svg></div>
+                    <div class="s-pill">100%</div>
+                    <div class="s-btn"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div>
+                    <div class="s-btn"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zm0-2c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4-9H8v2h8v-2z"/></svg></div>
+                </div>
+            </div>
+
+            <div id="main-layer" class="layer">
+                <div id="f1" class="face-container active">
+                    <div id="hour-hand" class="h-h"></div>
+                    <div id="min-hand" class="h-m"></div>
+                    <div id="sec-hand" class="h-s"></div>
+                    <div class="h-center"></div>
+                </div>
+                <div id="f2" class="face-container">
+                    <div class="pink-time"><span id="p-hr">00</span><br><span id="p-mn">00</span></div>
+                </div>
+                <div id="f3" class="face-container">
+                    <div class="ring">
+                        <div id="g-time" style="font-size: 2.2rem;">00:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="notifications" class="layer">
+                <div style="color: #666;">Уведомлений нет</div>
+                <div style="background: #d0bcff; color: #381e72; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold;">Clear all</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
+            
+            document.getElementById('sec-hand').style.transform = `rotate(${(s/60)*360}deg)`;
+            document.getElementById('min-hand').style.transform = `rotate(${(m/60)*360 + (s/60)*6}deg)`;
+            document.getElementById('hour-hand').style.transform = `rotate(${(h%12/12)*360 + (m/60)*30}deg)`;
+
+            const hh = String(h).padStart(2, '0'), mm = String(m).padStart(2, '0');
+            document.getElementById('p-hr').textContent = hh;
+            document.getElementById('p-mn').textContent = mm;
+            document.getElementById('g-time').textContent = `${hh}:${mm}`;
+        }
+        setInterval(updateClock, 1000); updateClock();
+
+        const screen = document.getElementById('screen'), main = document.getElementById('main-layer'), homeBtn = document.getElementById('home-btn');
+        let startY, startX, isDown = false, isSelector = false, currentIdx = 1, pressTimer;
+
+        screen.onpointerdown = (e) => {
+            isDown = true; startY = e.clientY; startX = e.clientX;
+            if (!isSelector) pressTimer = setTimeout(() => { isSelector = true; main.classList.add('selector-mode'); }, 800);
+        };
+        window.onpointermove = (e) => { if (isDown && (Math.abs(e.clientY - startY) > 15 || Math.abs(e.clientX - startX) > 15)) clearTimeout(pressTimer); };
+        window.onpointerup = (e) => {
+            if (!isDown) return; isDown = false; clearTimeout(pressTimer);
+            const dy = e.clientY - startY, dx = e.clientX - startX;
+            if (!isSelector) {
+                if (dy > 70) document.getElementById('status-bar').style.transform = 'translateY(0)';
+                if (dy < -70) document.getElementById('notifications').style.transform = 'translateY(0)';
+            } else if (Math.abs(dx) > 60) {
+                document.getElementById(`f${currentIdx}`).classList.remove('active');
+                currentIdx = dx > 0 ? (currentIdx === 1 ? 3 : currentIdx - 1) : (currentIdx === 3 ? 1 : currentIdx + 1);
+                document.getElementById(`f${currentIdx}`).classList.add('active');
+            }
+        };
+        homeBtn.onclick = () => {
+            isSelector = false; main.classList.remove('selector-mode');
+            document.getElementById('status-bar').style.transform = 'translateY(-100%)';
+            document.getElementById('notifications').style.transform = 'translateY(100%)';
+        };
+    </script>
+</body>
+</html>

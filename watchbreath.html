@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS Breathe Pro Multi-Time</title>
+    <style>
+        :root {
+            --bg-dark: #000;
+            --strap-color: #f2f2f2;
+            --accent-blue: #4facfe;
+            --accent-deep: #00f2fe;
+            --btn-gray: #1a1a1a;
+            --text-dim: #aaa;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; font-family: 'Segoe UI', Roboto, sans-serif;
+            color: white; overflow: hidden; touch-action: none;
+        }
+
+        .strap { position: absolute; width: 140px; height: 200px; background: var(--strap-color); border-radius: 20px; z-index: 1; }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+        .watch-container { position: relative; display: flex; justify-content: center; align-items: center; z-index: 2; }
+        .side-button { position: absolute; right: -12px; width: 20px; height: 50px; background: #999; border-radius: 5px; cursor: pointer; z-index: 10; }
+
+        .watch-face {
+            width: 320px; height: 320px; background: var(--bg-dark);
+            border-radius: 50%; border: 10px solid #d1d1d1;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        /* Progress Ring */
+        .ring-svg { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #111; stroke-width: 8; }
+        .ring-fill {
+            fill: none; stroke: url(#blue-grad); stroke-width: 8;
+            stroke-linecap: round; stroke-dasharray: 942; stroke-dashoffset: 942;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        /* Time Selector */
+        .time-selector {
+            position: absolute; top: 60px; display: flex; gap: 8px; z-index: 30;
+            transition: opacity 0.3s;
+        }
+        .time-chip {
+            padding: 4px 10px; background: var(--btn-gray); border-radius: 12px;
+            font-size: 0.75rem; color: var(--text-dim); cursor: pointer;
+        }
+        .time-chip.active { background: var(--accent-blue); color: white; }
+
+        .breathe-circle {
+            position: absolute; width: 180px; height: 180px;
+            background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%);
+            border-radius: 50%; opacity: 0;
+            transition: transform 4s ease-in-out, opacity 0.5s;
+            transform: scale(0.8);
+        }
+        .breathe-circle.active { opacity: 0.4; }
+        .breathe-circle.expand { transform: scale(1.4); }
+
+        .timer-text { font-size: 1.2rem; color: #aaa; margin-top: 20px; z-index: 10; visibility: hidden; }
+        .instruction { font-size: 2.2rem; font-weight: 400; text-align: center; z-index: 10; margin-top: 10px; }
+
+        .controls {
+            position: absolute; bottom: 35px; display: flex;
+            align-items: center; gap: 20px; z-index: 20;
+        }
+        .btn-side { width: 50px; height: 50px; background: var(--btn-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0.7; }
+        .btn-main {
+            width: 70px; height: 70px; 
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-deep));
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .svg-icon { width: 24px; height: 24px; fill: white; }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" id="reset-btn"></div>
+        <div class="watch-face">
+            <svg class="ring-svg" viewBox="0 0 320 320">
+                <defs>
+                    <linearGradient id="blue-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:var(--accent-blue)" />
+                        <stop offset="100%" style="stop-color:var(--accent-deep)" />
+                    </linearGradient>
+                </defs>
+                <circle class="ring-bg" cx="160" cy="160" r="150" />
+                <circle id="progress-bar" class="ring-fill" cx="160" cy="160" r="150" />
+            </svg>
+
+            <div id="selector" class="time-selector">
+                <div class="time-chip active" data-min="1">1m</div>
+                <div class="time-chip" data-min="3">3m</div>
+                <div class="time-chip" data-min="5">5m</div>
+                <div class="time-chip" data-min="10">10m</div>
+            </div>
+
+            <div id="visual-circle" class="breathe-circle"></div>
+            <div id="time-display" class="timer-text">01:00</div>
+            <div id="status-text" class="instruction">Ready?</div>
+
+            <div class="controls">
+                <div class="btn-side"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+                <div class="btn-main" id="start-btn">
+                    <svg id="play-icon" class="svg-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div class="btn-side"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedMinutes = 1;
+        let timeLeft = 60;
+        let totalSeconds = 60;
+        let isRunning = false;
+        let timerInterval, breatheInterval;
+        
+        const progressBar = document.getElementById('progress-bar');
+        const timeDisplay = document.getElementById('time-display');
+        const statusText = document.getElementById('status-text');
+        const visualCircle = document.getElementById('visual-circle');
+        const startBtn = document.getElementById('start-btn');
+        const playIcon = document.getElementById('play-icon');
+        const selector = document.getElementById('selector');
+
+        // Selection logic
+        document.querySelectorAll('.time-chip').forEach(chip => {
+            chip.onclick = () => {
+                if (isRunning) return;
+                document.querySelector('.time-chip.active').classList.remove('active');
+                chip.classList.add('active');
+                selectedMinutes = parseInt(chip.dataset.min);
+                totalSeconds = selectedMinutes * 60;
+                timeLeft = totalSeconds;
+                updateTimerDisplay();
+            };
+        });
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            timeDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function toggleApp() {
+            if (!isRunning) startSession(); else pauseSession();
+        }
+
+        function startSession() {
+            isRunning = true;
+            selector.style.opacity = '0';
+            playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            timeDisplay.style.visibility = 'visible';
+            visualCircle.classList.add('active');
+            timerInterval = setInterval(updateTimer, 1000);
+            runBreatheCycle();
+            breatheInterval = setInterval(runBreatheCycle, 8000);
+        }
+
+        function pauseSession() {
+            isRunning = false;
+            playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            clearInterval(timerInterval);
+            clearInterval(breatheInterval);
+            statusText.textContent = "Paused";
+            visualCircle.classList.remove('expand');
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            updateTimerDisplay();
+            const offset = 942 - (timeLeft / totalSeconds) * 942;
+            progressBar.style.strokeDashoffset = offset;
+            if (timeLeft <= 0) {
+                statusText.textContent = "Done!";
+                resetApp();
+            }
+        }
+
+        function runBreatheCycle() {
+            if (!isRunning) return;
+            statusText.textContent = "Breathe in";
+            visualCircle.classList.add('expand');
+            setTimeout(() => {
+                if (isRunning) {
+                    statusText.textContent = "Breathe out";
+                    visualCircle.classList.remove('expand');
+                }
+            }, 4000);
+        }
+
+        function resetApp() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            clearInterval(breatheInterval);
+            timeLeft = selectedMinutes * 60;
+            progressBar.style.strokeDashoffset = 942;
+            timeDisplay.style.visibility = 'hidden';
+            selector.style.opacity = '1';
+            visualCircle.classList.remove('active', 'expand');
+            playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        }
+
+        startBtn.onclick = toggleApp;
+        document.getElementById('reset-btn').onclick = resetApp;
+    </script>
+</body>
+</html>

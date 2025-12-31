@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMF AI Points</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --accent-blue: #3182ce;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            user-select: none;
+        }
+
+        /* Watch Hardware */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .side-button {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 50px;
+            background: linear-gradient(to right, #bbb, #ddd, #999);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .watch-face {
+            width: 320px;
+            height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 10px solid #d1d1d1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* AI Points Indicator */
+        .points-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .point {
+            width: 12px;
+            height: 12px;
+            background-color: #333; /* Серый в покое */
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .listening .point {
+            background-color: var(--accent-blue);
+            animation: dotPulse 0.6s infinite alternate;
+        }
+
+        .listening .point:nth-child(2) { animation-delay: 0.2s; }
+        .listening .point:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotPulse {
+            from { opacity: 0.4; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.2); }
+        }
+
+        .status-text {
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            max-width: 200px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" onclick="resetAI()"></div>
+        <div class="watch-face" onclick="startListening()">
+            <div class="points-container" id="points-box">
+                <div class="point"></div>
+                <div class="point"></div>
+                <div class="point"></div>
+            </div>
+            <div class="status-text" id="status-msg">Нажми, чтобы говорить</div>
+        </div>
+    </div>
+
+<script>
+    let isListening = false;
+    let timer = null;
+
+    function startListening() {
+        if (isListening) return;
+
+        isListening = true;
+        const container = document.getElementById('points-box');
+        const text = document.getElementById('status-msg');
+
+        container.classList.add('listening');
+        text.textContent = "Слушаю...";
+
+        // 3 seconds timeout
+        timer = setTimeout(() => {
+            stopListening();
+        }, 3000);
+    }
+
+    function stopListening() {
+        isListening = false;
+        const container = document.getElementById('points-box');
+        const text = document.getElementById('status-msg');
+
+        container.classList.remove('listening');
+        text.textContent = "Нажми, чтобы говорить";
+    }
+
+    function resetAI() {
+        clearTimeout(timer);
+        stopListening();
+    }
+</script>
+</body>
+</html>

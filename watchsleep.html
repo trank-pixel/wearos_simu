@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearOS Sleep Tracker</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --strap-color: #f2f2f2;
+            --text-color: #fff;
+            --main-accent: #8e44ad; /* Пурпурный для сна */
+            --deep-sleep-color: #5d35b0;
+            --core-sleep-color: #8e44ad;
+            --rem-sleep-color: #bb8fce;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text-color);
+            user-select: none;
+        }
+
+        /* Hardware */
+        .strap {
+            position: absolute;
+            width: 140px;
+            height: 200px;
+            background-color: var(--strap-color);
+            border-radius: 20px;
+            z-index: 0;
+        }
+        .strap-top { transform: translateY(-220px); }
+        .strap-bottom { transform: translateY(220px); }
+
+        .watch-container { position: relative; z-index: 1; }
+
+        .side-button {
+            position: absolute;
+            right: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 50px;
+            background: linear-gradient(to right, #ccc, #eee, #999);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .watch-face {
+            width: 320px; height: 320px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            border: 8px solid #333;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .screen.active { display: flex; }
+
+        /* Screen 1: Overview */
+        #sleep-duration {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--main-accent);
+            margin-bottom: 5px;
+        }
+        #sleep-percent {
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+        #sleep-goal {
+            font-size: 0.7rem;
+            color: #777;
+            margin-top: 5px;
+        }
+
+        /* Screen 2: Chart */
+        .chart-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--deep-sleep-color) 0% var(--deep-sleep-end),
+                var(--core-sleep-color) var(--deep-sleep-end) var(--core-sleep-end),
+                var(--rem-sleep-color) var(--core-sleep-end) var(--rem-sleep-end),
+                #333 var(--rem-sleep-end) 100%
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chart-inner-circle {
+            width: 100px;
+            height: 100px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+        .chart-legend {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.7rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+        
+        /* Screen 3: Animal */
+        #animal-name {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--main-accent);
+            margin-bottom: 10px;
+        }
+        #animal-emoji {
+            font-size: 3rem;
+        }
+        #sleep-animal-time {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="strap strap-top"></div>
+    <div class="strap strap-bottom"></div>
+
+    <div class="watch-container">
+        <div class="side-button" onclick="nextScreen()"></div>
+        
+        <div class="watch-face">
+            <div id="screen-overview" class="screen active">
+                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 15px;">Продолжительность сна</div>
+                <div id="sleep-duration"></div>
+                <div id="sleep-percent"></div>
+                <div id="sleep-goal">Цель: 9 ч</div>
+            </div>
+
+            <div id="screen-chart" class="screen">
+                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 15px;">Фазы сна</div>
+                <div class="chart-container">
+                    <div class="chart-inner-circle">Всего сна<br><span id="chart-total-sleep"></span></div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-color" style="background-color: var(--deep-sleep-color);"></div>Глубокий</div>
+                    <div class="legend-item"><div class="legend-color" style="background-color: var(--core-sleep-color);"></div>Основной</div>
+                    <div class="legend-item"><div class="legend-color" style="background-color: var(--rem-sleep-color);"></div>Быстрый</div>
+                </div>
+            </div>
+
+            <div id="screen-animal" class="screen">
+                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 15px;">Ваше животное сна</div>
+                <div id="animal-name"></div>
+                <div id="animal-emoji"></div>
+                <div id="sleep-animal-time"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const screens = ['screen-overview', 'screen-chart', 'screen-animal'];
+    let currentScreenIndex = 0;
+    const sleepGoalMinutes = 9 * 60; // 9 hours in minutes
+    let sleepDurationMinutes; // This will be randomized
+
+    // Function to show a specific screen
+    function showScreen(index) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screens[index]).classList.add('active');
+    }
+
+    // Function to calculate and display sleep data
+    function generateSleepData() {
+        // Random sleep duration between 7h 47m (467min) and 11h 3m (663min)
+        sleepDurationMinutes = Math.floor(Math.random() * (663 - 467 + 1)) + 467;
+
+        const hours = Math.floor(sleepDurationMinutes / 60);
+        const minutes = sleepDurationMinutes % 60;
+
+        // Screen 1: Overview
+        document.getElementById('sleep-duration').textContent = `${hours}ч ${minutes}мин`;
+        const percentage = Math.round((sleepDurationMinutes / sleepGoalMinutes) * 100);
+        document.getElementById('sleep-percent').textContent = `Цель достигнута на ${percentage}%`;
+
+        // Screen 2: Chart
+        // Distribute sleep phases (example ratios)
+        const deepSleepMinutes = Math.round(sleepDurationMinutes * 0.2); // ~20%
+        const remSleepMinutes = Math.round(sleepDurationMinutes * 0.25); // ~25%
+        const coreSleepMinutes = sleepDurationMinutes - deepSleepMinutes - remSleepMinutes; // Remaining
+
+        const totalSleepForChart = deepSleepMinutes + coreSleepMinutes + remSleepMinutes;
+        
+        // Calculate percentages for conic-gradient
+        const deepSleepPerc = (deepSleepMinutes / totalSleepForChart) * 100;
+        const coreSleepPerc = (coreSleepMinutes / totalSleepForChart) * 100;
+        const remSleepPerc = (remSleepMinutes / totalSleepForChart) * 100;
+
+        const deepSleepEnd = deepSleepPerc;
+        const coreSleepEnd = deepSleepPerc + coreSleepPerc;
+        const remSleepEnd = deepSleepPerc + coreSleepPerc + remSleepPerc;
+
+        const chartContainer = document.querySelector('.chart-container');
+        chartContainer.style.setProperty('--deep-sleep-end', `${deepSleepEnd}%`);
+        chartContainer.style.setProperty('--core-sleep-end', `${coreSleepEnd}%`);
+        chartContainer.style.setProperty('--rem-sleep-end', `${remSleepEnd}%`);
+        document.getElementById('chart-total-sleep').textContent = `${hours}ч ${minutes}мин`;
+
+
+        // Screen 3: Animal
+        let animalName = "";
+        let animalEmoji = "";
+        let exactHours = hours + (minutes / 60);
+
+        if (exactHours >= 11 + (2/60) && exactHours <= 11 + (3/60)) { // 11ч 2-3мин
+            animalName = "Шиншилла";
+            animalEmoji = "☻"; // Примерный смайлик
+        } else if (exactHours >= 10.5) { // Около 11ч
+            animalName = "Кролик";
+            animalEmoji = "☻";
+        } else if (exactHours >= 9.5) { // Около 10ч
+            animalName = "Собака";
+            animalEmoji = "☻";
+        } else if (exactHours >= 7.5) { // 8-9ч
+            animalName = "Ёж";
+            animalEmoji = "⍨";
+        } else if (exactHours >= 6.5) { // 7ч
+            animalName = "Кошка";
+            animalEmoji = "⍨";
+        } else {
+             animalName = "Неизвестное животное"; // На всякий случай
+             animalEmoji = "(O_O)";
+        }
+
+        document.getElementById('animal-name').textContent = animalName;
+        document.getElementById('animal-emoji').textContent = animalEmoji;
+        document.getElementById('sleep-animal-time').textContent = `${hours}ч ${minutes}мин`;
+    }
+
+    // Function to switch to the next screen
+    function nextScreen() {
+        currentScreenIndex = (currentScreenIndex + 1) % screens.length;
+        showScreen(currentScreenIndex);
+    }
+
+    // Initialize on load
+    window.onload = () => {
+        generateSleepData();
+        showScreen(currentScreenIndex);
+    };
+</script>
+</body>
+</html>

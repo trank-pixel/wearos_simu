@@ -1,11 +1,13 @@
 # wearos_simu
 WearOS HTML Simulation.
+![Visitors](https://img.shields.io/badge/visitors-pls_contribute-cyan)
 
 
 
 # [RU] ***Описание проекта***
 
 wearos_simu — это детальная коллекция из 18 интерактивных веб-симуляторов, воссоздающих визуальный и функциональный опыт WearOS, Pixel Watch и CMF Watch. Проект демонстрирует возможности современной верстки для круглых дисплеев.
+> [!IMPORTANT]
 > Важно: Все приложения упакованы в стилизованный корпус часов с работающей боковой кнопкой.
 
 
@@ -24,7 +26,8 @@ wearos_simu — это детальная коллекция из 18 интер�
 # [EN] ***Project Description***
 
 wearos_simu is a detailed collection of 18 interactive web-based simulators recreating the WearOS, Pixel Watch, and CMF Watch experience. This project showcases advanced UI/UX design for circular wearable displays.
-> Note: Each simulation is encased in a custom-designed watch frame with a functional side button.
+> [!IMPORTANT]
+>  Each simulation is encased in a custom-designed watch frame with a functional side button.
 
 ### 🚀 ***Key Features:***
 

@@ -1,6 +1,8 @@
 # wearos_simu
 WearOS HTML Simulation.
+
 ![Visitors](https://img.shields.io/badge/visitors-pls_contribute-cyan)
+![Size](https://img.shields.io/github/repo-size/trank-pixel/wearos_simu)
 
 
 
